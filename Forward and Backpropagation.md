@@ -7,6 +7,8 @@ Let:
 * (x,y) be the input sample where x is the input and y is the ground truth
 * Let W be the collective weights of w1, w2
 * let b be the bias 
+* alpha is the learning rate
+* sigma(z) = (1+e^-z)^-1
 
 1. Initialize the variables to any values:
 ```    
@@ -51,3 +53,6 @@ Note that this algorithm of minimizing the cost function can be done in 3-nest o
 * and the highest level being the minimization of cost function
 
 This could be further optimized by using vectorization techniques.
+
+
+I hope github implements LaTeX support for markdowns, *cough cough*
