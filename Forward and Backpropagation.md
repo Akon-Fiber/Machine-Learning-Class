@@ -2,6 +2,12 @@
 
 ## One-step Forward and Backward Propagation
 
+Let:
+
+* (x,y) be the input sample where x is the input and y is the ground truth
+* Let W be the collective weights of w1, w2
+* let b be the bias 
+
 1. Initialize the variables to any values:
 ```    
         J = 0
@@ -37,11 +43,11 @@ J = Cost += Loss                ; Compute all loss and add
     b  : b  - (alpha)db
 ```
 
-This is only for 1 iteration of Forward and Backprop, do more iterations until cost is minimized.
+This is only for 1 iteration of Forward and Backward propagation, do more iterations until cost function J is minimized.
 
-Note that this algorithm of minimizing the cost function can be done in 3-nest loop
-* one for the insides feed-forward and backward propation
+Note that this algorithm of minimizing the cost function can be done in 3-nest of loop
+* one for the insides of feed-forward and backward propation
 * another level on the whole process of one-step forward and backprop for the whole training set
 * and the highest level being the minimization of cost function
 
-This could be further optimized by using vectorization techniques
+This could be further optimized by using vectorization techniques.
