@@ -4,11 +4,13 @@
 
 Let:
 
-* (x,y) be the input sample where x is the input and y is the ground truth
-* Let W be the collective weights of w1, w2
-* let b be the bias 
+* (x,y) be the input sample where x is the input and y is the ground truth output
+* W be the collective weight, containing w1 and w2
+* b be the bias 
 * alpha is the learning rate
 * sigma(z) = (1+e^-z)^-1
+* loss_func be any loss function, e.g. binary cross entropy, MSE(Mean Square Error), etc..
+* m be the total number of examples (x,y) in training set
 
 1. Initialize the variables to any values:
 ```    
@@ -40,9 +42,9 @@ J = Cost += Loss                ; Compute all loss and add
 ```
 5. Update weights and parameters
 ```
-    w1 : w1 - (alpha)dw1
-    w2 : w2 - (alpha)dw2
-    b  : b  - (alpha)db
+      w1 : w1 - (alpha)dw1
+      w2 : w2 - (alpha)dw2
+       b  : b  - (alpha)db
 ```
 
 This is only for 1 iteration of Forward and Backward propagation, do more iterations until cost function J is minimized.
