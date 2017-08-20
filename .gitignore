@@ -1,0 +1,7 @@
+Datasets/mnist/mnist_extract/
+Datasets/mnist/mnist_orig/
+Datasets/mnist/mnist_sorted/
+"B1 Logistic Regression"/__pycache__/
+"B1 Logistic Regression"/mnist_extract/
+"B1 Logistic Regression"/mnist_orig/
+"B1 Logistic Regression"/mnist_sorted/
