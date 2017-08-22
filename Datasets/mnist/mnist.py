@@ -4,22 +4,22 @@ Author: Rusty Mina (rusty.mina@eee.upd.edu.ph)
 
 This is a script containing funtions that can load and save images and labels from mnist dataset
 Before running this script, download the dataset from http://yann.lecun.com/exdb/mnist/
-and extract to mnist_orig folder, see the folder structure below for reference 
+and extract to mnist_extract folder, see the folder structure below for reference 
 
 Folder structure 
 
 root
     mnist.py
+    mnist_download
+        t10k-images-idx3-ubyte.gz
+        t10k-labels-idx1-ubyte.gz
+        train-images-idx3-ubyte.gz
+        train-labels-idx1-ubyte.gz 
     mnist_extract
-        test_image
-           *.jpg
-        train_image
-           *.jpg
-    mnist_orig
-        t10k-images.idx3-ubyte
-        t10k-labels.idx1-ubyte
-        train-images.idx3-ubyte
-        train-labels.idx1-ubyte
+        t10k-images-idx3-ubyte
+        t10k-labels-idx1-ubyte
+        train-images-idx3-ubyte
+        train-labels-idx1-ubyte
     mnist_sorted
         test
             1
@@ -30,31 +30,105 @@ root
             1
             .
             .
-            9            
+            9             
+    mnist_unsorted
+        test
+           *.jpg
+        train
+           *.jpg
 
 """
+
 import numpy as np
 import struct
+import os
+import urllib.request as ur
+import gzip
 from PIL import Image
 
-# mnist folder info
-mnist_folder_path = "mnist_orig/"
-train_image_path = "train-images.idx3-ubyte"
-train_label_path = "train-labels.idx1-ubyte"
-test_image_path = "t10k-images.idx3-ubyte"
-test_label_path = "t10k-labels.idx1-ubyte"
+# Folders
+mnist_unsorted_folder = "mnist_unsorted/"
+mnist_sorted_folder = "mnist_sorted/"
+mnist_download_folder = "mnist_download/"
+mnist_extract_folder = "mnist_extract/"
 
-# Output Image Settings
-output_train_path = "mnist_extract/train_image/"
-output_test_path = "mnist_extract/test_image/"
+# External file info
+mnist_url = "http://yann.lecun.com/exdb/mnist/"
 
-def load_dataset_image( filename ):
+# Filenames
+mnist_filenames =   {   
+                        "test_image" : "t10k-images-idx3-ubyte", 
+                        "test_label": "t10k-labels-idx1-ubyte", 
+                        "train_image" : "train-images-idx3-ubyte", 
+                        "train_label": "train-labels-idx1-ubyte" 
+                    }
+file_bytes =        {   
+                        "test_image" : 1648877, 
+                        "test_label": 4542, 
+                        "train_image" : 9912422, 
+                        "train_label": 28881 
+                    }
+            
+
+def mnist_download( filename, expected_bytes ):
+    """
+    Download a file if not present, and make sure it's the right size.
+    Files are stored in mnist_download
+    """
+    filename = filename + ".gz"
+    filepath = mnist_download_folder + filename
+
+    if not os.path.exists( mnist_download_folder ):
+        os.makedirs( mnist_download_folder )
+
+    if not os.path.exists( filepath ):
+        print( "Downloading ", filename, " ..." )
+        file_download = ur.URLopener()
+        file_download.retrieve( mnist_url + filename, filepath )
+        statinfo = os.stat( filepath )
+        if statinfo.st_size == expected_bytes:
+            print( "Found and verified", filepath )
+        else:
+            raise Exception( "Failed to verify " +
+                            filename + ". Can you get to it with a browser? \nDownload .gz files from http://yann.lecun.com/exdb/mnist/ and store in mnist_download folder" )
+    else:
+        print( "Found and verified", filepath )
+
+    return filepath
+
+def mnist_extract( filename ):
+    """
+    Extract the contents of gzip
+    Extracted files are stored in mnist_extract
+    """
+    filename = filename + ".gz"
+    filepath = mnist_download_folder + filename
+
+    if not os.path.exists( filepath ):
+        print("[ERROR ERROR] Please run mnist_download() first")
+    else:
+
+        if not os.path.exists( mnist_extract_folder ):
+            os.makedirs( mnist_extract_folder )
+
+        # fts stands for File To Store
+        fts = filename[ :-3 ]   # remove ".gz"    
+
+        print("Extracting", filename, "to", mnist_extract_folder + fts )
+
+        with gzip.open( filepath, 'rb' ) as f:
+            file_content = f.read()
+
+        with open( mnist_extract_folder + fts, 'wb' ) as f2:
+            f2.write( file_content )
+
+def load_mnist_extract( filename ):
     """
     Load image pixel values from binary and store as numpy array of shape (examples, row_size * col_size)
     Images are greyscale (8 Bit Depth)
     """
 
-    print("Loading images")
+    print("Loading MNIST Dataset")
 
     with open(filename, "rb") as f:
 
@@ -73,37 +147,85 @@ def load_dataset_image( filename ):
         parsed = np.array(parsed)
         print(parsed.shape)
 
-    print("Done loading images")
+    print("Done loading MNIST dataset")
     return parsed
 
-def save_dataset_image(data, test_train):
+def mnist_unsorted( test_train ):
     """
+    Extract images and store them in mnist_unsorted unsorted
+    See the folder structure above for reference
+
     Save numpy arrays as greyscale image of shape (28,28,1)
     To save numpy arrays as RGB, use convert('RGB') instead of convert('L) 
     """
 
-    print("Saving images. This may take a while")
     if (test_train == "train"):
-        output_folder = output_train
+        data = load_mnist_extract( mnist_extract_folder + mnist_filenames["train_image"] )
+        output_folder = mnist_unsorted_folder + "train/"
     else:
-        output_folder = output_test
+        data = load_mnist_extract( mnist_extract_folder + mnist_filenames["test_image"] )
+        output_folder = mnist_unsorted_folder + "test/"
+
+    if not os.path.exists( output_folder ):
+        os.makedirs( output_folder )
+
+    print("Saving unsorted images. This may take a while...")
 
     data_shape = data.shape
     for i in range( data_shape[0] ):
         name = str(i + 1)
         foo = data[i].reshape( 28, 28 )
         im = Image.fromarray( foo ).convert('L')
-        im.save(output_folder + name + ".jpeg" )
+        im.save( output_folder + name + ".jpeg" )
 
     print("Done saving images")
 
-def load_label(train_test):
+def mnist_sorted( train_test ):
+    """
+    Extract images and store them in mnist_sorted where folder name is the label
+    See the folder structure above for reference
+        
+    Save numpy arrays as greyscale image of shape (28,28,1)
+    To save numpy arrays as RGB, use convert('RGB') instead of convert('L) 
+    """
+
+    if (train_test == "train"):
+        label_value = load_mnist_label("train")
+        image_data = load_mnist_extract( mnist_extract_folder + mnist_filenames["train_image"] )
+    else:
+        label_value = load_mnist_label("test")
+        image_data = load_mnist_extract( mnist_extract_folder + mnist_filenames["test_image"] )
+    
+    print("Saving sorted images. This may take a while...")
+
+    label_value = label_value.reshape( label_value.shape[0] )
+
+    for i in range(10):
+
+        label_name = str( i )
+        current_folder  = mnist_sorted_folder + train_test + "/" + label_name
+        if not os.path.exists( current_folder ):
+            os.makedirs( current_folder )
+        
+        print( "Extracting images of " + label_name )
+
+        locations = np.where(label_value == i )[0]
+
+        count = 0
+        for i in locations:
+            name = str( count + 1 )
+            poo = image_data[i].reshape( 28,28 )
+            im = Image.fromarray( poo ).convert('L')
+            im.save( current_folder + "/" + name + ".jpeg" )
+            count += 1
+
+def load_mnist_label(train_test):
 
     print("Loading labels")
     if (train_test == "train"):
-        filename = mnist_folder_path + train_label_path
+        filename = mnist_extract_folder + mnist_filenames["train_label"]
     else:
-        filename = mnist_folder_path + test_label_path
+        filename = mnist_extract_folder + mnist_filenames["test_label"]
 
     with open(filename, "rb") as f:
 
@@ -120,52 +242,53 @@ def load_label(train_test):
         
         return parsed
 
-def save_dataset_sorted(train_test):
+def mnist_download_and_extract():
     """
-    Extract images and store them in mnist_sorted where folder name is the label
-    See the folder structure above for reference
+    Download and extract mnist dataset found in http://yann.lecun.com/exdb/mnist/
     """
 
-    if (train_test == "train"):
-        label_value = load_label("train")
-        image_data = load_dataset_image(mnist_folder_path + train_image_path)
-    else:
-        label_value = load_label("test")
-        image_data = load_dataset_image(mnist_folder_path + test_image_path)
+    print("Downloading and extracting MNIST Dataset. This may take a while...")
+    count = 0
+    for key in mnist_filenames:
+        mnist_download( mnist_filenames[key], file_bytes[key] )
+        mnist_extract( mnist_filenames[key] )
+        count += 1
 
-    label_value = label_value.reshape( label_value.shape[0] )
+    print("Done downloading and extracting MNIST Dataset")
 
-    for i in range(1):
-        value = i
-        label_name = str(value)
-        print( "Extracting images of " + label_name )
+def mnist_all():
 
-        locations = np.where(label_value == value)[0]
+    print("Preparing MNIST Dataset")
 
-        count = 0
-        for i in locations:
-            name = str(count + 1)
-            poo = image_data[i].reshape( 28,28 )
-            im = Image.fromarray( poo ).convert('L')
-            im.save("mnist_sorted/" + train_test + "/" + label_name + "/" + name + ".jpeg" )
-            count += 1
+    # Download and extract MNIST dataset
+    mnist_download_and_extract()
 
-# Main
+    # Unsorted Training Images
+    print("Unsorted Training Images")
+    mnist_unsorted("train")
+
+    # Unsorted Test Images
+    print("Unsorted Test Images")
+    mnist_unsorted("test")
+
+    # Sorted Training Images
+    print("Sorted Training Images")
+    mnist_sorted("train")
+
+    # Sorted Test Images
+    print("Sorted Test Images")
+    mnist_sorted("test")
+
+    # Load train labels
+    train_label_values = load_mnist_label( "train" )
+    print(train_label_values.shape)
+
+    # Load test labels
+    test_label_values = load_mnist_label( "test" )
+    print(test_label_values.shape)
+
+    print("Done preparing MNIST Dataset")
+
 """
-# Unsorted Training Images
-print("Train Images")
-foo = load_dataset_image(mnist_folder_path + train_image_path)
-save_dataset_image( foo, "train" )
-
-# Unsorted Test Images
-print("Test Images")
-foo = load_dataset_image(mnist_folder_path + test_image_path)
-save_dataset_image( foo, "test" )
-
-
-# Sorted Training Images
-save_dataset_sorted("train")
-
-# sorted Test Images
-save_dataset_sorted("test")
+mnist_all()
 """
