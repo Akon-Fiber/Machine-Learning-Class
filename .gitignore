@@ -2,7 +2,7 @@ Datasets/mnist/mnist_download/
 Datasets/mnist/mnist_extract/
 Datasets/mnist/mnist_sorted/
 Datasets/mnist/mnist_unsorted/
-"B1 Logistic Regression"/__pycache__/
+"B1 Logistic Regression"/mnist_download/
 "B1 Logistic Regression"/mnist_extract/
-"B1 Logistic Regression"/mnist_orig/
+"B1 Logistic Regression"/mnist_unsorted/
 "B1 Logistic Regression"/mnist_sorted/

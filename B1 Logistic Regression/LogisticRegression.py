@@ -16,16 +16,16 @@ For more info about mnist dataset, refer to mnist.py just beside this script :>
 This is a logistic regression exercise from the same exercise in deeplearning.ai by Andrew Ng
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
+import mnist
+from PIL import Image
+
 # Global Settings
 class1 = 0
 class2 = 1
 learning_rate = 0.1
 num_iterations = 100
-
-import numpy as np
-import matplotlib.pyplot as plt
-import mnist
-from PIL import Image
 
 def sigmoid(z):
     return 1/( 1 + np.exp(-z) )
@@ -98,37 +98,40 @@ def predict( w, b, X ):
             Y_pred.append(1)
 
     Y_pred = np.array(Y_pred).reshape(A_len, 1)
-    print(Y_pred.shape)
+
     return Y_pred        
 
 def load_mnist_dataset(train_test):
 
     # Training or Testing dataset?
     if (train_test == "train"):
-        data_orig = mnist.load_dataset_image( mnist.mnist_folder_path + mnist.train_image_path )
-        label_orig = mnist.load_label( "train" )
+        data_orig = mnist.load_mnist_extract( mnist.mnist_extract_folder + mnist.mnist_filenames["train_image"] )
+        label_orig = mnist.load_mnist_label( "train" )
     else:
-        data_orig = mnist.load_dataset_image( mnist.mnist_folder_path + mnist.test_image_path )
-        label_orig = mnist.load_label( "test" )
+        data_orig = mnist.load_mnist_extract( mnist.mnist_extract_folder + mnist.mnist_filenames["test_image"] )
+        label_orig = mnist.load_mnist_label( "test" )
 
     # Get only 0 and 1 dataset
     label = []
     data = []
     example_num = label_orig.shape[0]
-    for i in range(example_num):
-        if (label_orig[i] == class1):
+
+    for i in range( example_num ):
+        if ( label_orig[i] == class1 ):
             data.append( data_orig[i] )
             label.append( 0 )
-        elif (label_orig[i] == class2):
+        elif ( label_orig[i] == class2 ):
             data.append( data_orig[i] )
-            label.append(1)
+            label.append( 1 )
 
-    data = np.array(data)
-    data = data/255
+    data = np.array( data )     # Turn Python List into a numpy array
+    data = data/255             # Normalize pixel values for easier descent
     data = data.T
-    label = np.array(label)
-    label = label.reshape(label.shape[0], 1)
+
+    label = np.array( label )
+    label = label.reshape( label.shape[0], 1 )
     label = label.T
+    
     return data, label
 
 # Main
@@ -175,13 +178,15 @@ while (custom):
     """
     Use only 28 * 28 - 8-bit image
     """
-    image_file_name = input("Filename: ")
+    image_file_name = input( "Filename: " )
     image_file_name = image_file_name + ".jpeg"
 
-    im = Image.open(image_file_name)
+    im = Image.open( image_file_name )
     im.load()
     data = np.asarray( im ).reshape( 28 * 28 , 1 ) / 255
-    print(data.shape)
-
-    helo = predict(w, b, data)
-    print(helo)
+    
+    result = predict(w, b, data)
+    if ( result[0][0] == 0 ):
+        print( image_file_name + " is a " + str(class1) )
+    else:
+        print( image_file_name + " is a " + str(class2) )
